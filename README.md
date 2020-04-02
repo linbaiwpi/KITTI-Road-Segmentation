@@ -10,6 +10,11 @@
 
 It contains the code for both training and segmentation of lane lines using Deep Learning. Currently the supported architectures are ENET, UNET, Modified VGG.
 
+## Updates
+************* Update 2020-04-02 *************
+- [x] Migrate the project into Python3.6, Tensorflow1.14
+- [x] Add more options for loss, optimizer
+- [x] Add test.py with visualization of result
 
 ## Features
 

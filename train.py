@@ -10,6 +10,7 @@ Lane Detection
 
 import argparse
 import json
+import os
 
 from src.DataHandler import DataSanity
 from src.frontend import Segment
@@ -23,6 +24,11 @@ argparser.add_argument(
     '--conf', default="config.json",
     help='path to configuration file')
 
+'''
+argparser.add_argument(
+    '--gpu', default="0",
+    help='define which GPU is used')
+'''
 
 def _main_(args):
     """
@@ -31,6 +37,10 @@ def _main_(args):
 
     # parse command line argument
     config_path = args.conf
+#    gpu_num = args.gpu
+
+#    os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+#    os.environ["CUDA_VISIBLE_DEVICES"] = gpu_num  # specify which GPU(s) to be used
 
     # open and load the config json
     with open(config_path) as config_buffer:
@@ -43,11 +53,11 @@ def _main_(args):
     data_dir = config["train"]["data_directory"]
 
     # Trigger the the dataset downloader if the dataset is not present
-    DataSanity(data_dir).dispatch()
+    #DataSanity(data_dir).dispatch()
 
     # define the model and train
     segment = Segment(backend, input_size, classes)
-    segment.train(config["train"])
+    segment.train(config["train"], config["valid"], config["model"])
 
 
 if __name__ == '__main__':

@@ -1,6 +1,6 @@
-from keras import Input, Model
-from keras.layers import Conv2D, MaxPooling2D, concatenate, BatchNormalization, PReLU, SpatialDropout2D, Add, \
-    Conv2DTranspose, ReLU, Activation, Permute, ZeroPadding2D, UpSampling2D, K, Dense, Reshape, Concatenate
+from tensorflow.keras import Input, Model
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, concatenate, BatchNormalization, PReLU, SpatialDropout2D, Add
+from tensorflow.keras.layers import Conv2DTranspose, ReLU, Activation, Permute, ZeroPadding2D, UpSampling2D, Dense, Reshape, Concatenate
 
 
 class ENET():

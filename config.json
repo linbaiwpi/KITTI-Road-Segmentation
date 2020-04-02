@@ -1,19 +1,28 @@
 {
     "model" : {
-        "backend":              "UNET",
-        "im_width":             576,
-        "im_height":            160,
+        "backend":              "UBNet_shorter_upsample",
+        "im_width":             1216,
+        "im_height":            352,
         "classes":              2
     },
 
     "train": {
-        "data_directory":       "./data/",
-        "batch_size":           2,
-        "learning_rate":        1e-5,
-        "nb_epochs":            120,
+        "data_directory":       "./data_road_ext/training/",
+        "batch_size":           16,
+        "nb_epochs":            100,
         "debug":                true,
-        "save_model_name" :     "UNET.h5",
+        "save_model_name" :     "model-{epoch:03d}-{val_acc:.3f}.h5",
         "logs_dir" :            "logs",
-        "train_times":          8
-    }
+        "train_times":          8,
+        "optimizer":            "SGD",
+        "learning_rate":        1e-4,
+        "decay":                1e-6,
+        "momentum":             0.9,
+        "loss":                 "wce"
+    },
+	
+	"valid": {
+        "data_directory":       "./data_road_ext/validation/",
+        "batch_size":           1
+	}
 }

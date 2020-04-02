@@ -1,6 +1,6 @@
 **/*.png
 ./result/*.h5
-./logs/*
+./logs
 **/__pycache__/
 ./data_road_ext/validation/semantic
 

@@ -2,19 +2,23 @@ import cv2
 import math
 import os
 import re
+import keras
 from glob import glob
 
-from keras.utils import Sequence
+from tensorflow.keras.utils import Sequence
 
 import numpy as np
 import scipy.misc
 from keras.preprocessing.image import load_img
 from imgaug import augmenters as iaa
+from PIL import Image
+
+import matplotlib.pyplot as plt
 
 
 class DataSequence(Sequence):
 
-    def __init__(self, data_dir, batch_size, image_shape):
+    def __init__(self, data_dir, batch_size, image_shape, training=True):
         """
         Keras Sequence object to train a model on larger-than-memory data.
             @:param: data_dir: directory in which we have got the kitti images and the corresponding masks
@@ -24,10 +28,25 @@ class DataSequence(Sequence):
 
         self.batch_size = batch_size
         self.image_shape = image_shape
+        self.training = training
         self.image_paths = glob(os.path.join(data_dir, 'image_2', '*.png'))
-        self.label_paths = {
-            re.sub(r'_(lane|road)_', '_', os.path.basename(path)): path
-            for path in glob(os.path.join(data_dir, 'gt_image_2', '*_road_*.png'))}
+        #print(self.image_paths)       
+        print("*****************[DATA INFO]*****************")
+        if (training):
+            print("Found " + str(len(self.image_paths)) + " training images")
+        else:
+            print("Found " + str(len(self.image_paths)) + " validation images")
+        print("*********************************************")
+        
+        if (training):
+            self.label_paths = {re.sub(r'_(lane|road)_', '_', os.path.basename(path)): path
+                for path in glob(os.path.join(data_dir, 'gt_image_2', '*_road_*.png'))}
+            #glob(os.path.join(data_dir, 'gt_image_2', '*.png'))
+        else:
+            self.label_paths = {os.path.basename(path): path
+                for path in glob(os.path.join(data_dir, 'gt_image_2', '*.png'))}
+                    
+        #print(self.label_paths)        
         self.sometimes = lambda aug: iaa.Sometimes(0.5, aug)
 
         self.aug_pipe = iaa.Sequential(
@@ -51,6 +70,7 @@ class DataSequence(Sequence):
                                # change brightness of images (by -10 to 10 of original value)
                                iaa.Multiply((0.5, 1.5), per_channel=0.5),
                                iaa.ContrastNormalization((0.5, 2.0), per_channel=0.5),  # improve or worsen the contrast
+                               iaa.MultiplyHueAndSaturation((0.5, 1.5)),
                            ],
                            random_order=True
                            )
@@ -75,11 +95,20 @@ class DataSequence(Sequence):
         # Fetch a batch of images from a list of paths
         for im in path_list[idx * self.batch_size: (1 + idx) * self.batch_size]:
             # load the image and resize
-            image = load_img(im)
-            image = scipy.misc.imresize(image, (self.image_shape[1], self.image_shape[0]))
+            # image = load_img(im)
+            image = Image.open(im).convert('RGB')
+            image = image.resize((self.image_shape[0], self.image_shape[1]), Image.BILINEAR)
+            image = np.array(image)
+            # image = scipy.misc.imresize(image, (self.image_shape[1], self.image_shape[0]))
+            # image = np.array(Image.fromarray(image).resize((self.image_shape[1], self.image_shape[0]),Image.NEAREST))
             # augment the image
-            image = self.aug_pipe.augment_image(image)
-            return np.array([image])
+            if (self.training):
+                image = self.aug_pipe.augment_image(image)
+
+            # print(np.array([image]).shape)
+            # Image.fromarray(np.squeeze(np.array([image]))).save('./'+str(im.split('/')[-1]))
+            # np.save('image2',np.array([image])/255)
+            return np.array([image])/255
 
 
     def get_batch_labels(self, idx, path_list):
@@ -92,13 +121,21 @@ class DataSequence(Sequence):
         """
         # iterate and map the mask labels for the respective images
         for im in path_list[idx * self.batch_size: (1 + idx) * self.batch_size]:
+            # print(os.path.basename(im))
+            # print("=======lalala=======")
             gt_image_file = self.label_paths[os.path.basename(im)]
-            gt_image = load_img(gt_image_file)
-            gt_image = scipy.misc.imresize(gt_image, (self.image_shape[1], self.image_shape[0]))
+            # gt_image = load_img(gt_image_file)
+            gt_image = Image.open(gt_image_file).convert('RGB')
+            gt_image = gt_image.resize((self.image_shape[0], self.image_shape[1]), Image.NEAREST)
+            gt_image = np.array(gt_image)
+            # gt_image = scipy.misc.imresize(gt_image, (self.image_shape[1], self.image_shape[0]))
+            # gt_image = np.array(Image.fromarray(gt_image).resize((self.image_shape[1], self.image_shape[0]),Image.NEAREST))
             background_color = np.array([255, 0, 0])
             gt_bg = np.all(gt_image == background_color, axis=2)
             gt_bg = gt_bg.reshape(*gt_bg.shape, 1)
             gt_image = np.concatenate((gt_bg, np.invert(gt_bg)), axis=2)
+            # print("=====================" + str(np.array([gt_image]).shape))
+            # np.save('label2', np.array([gt_image]))
             return np.array([gt_image])
 
     def __getitem__(self, idx):
@@ -109,4 +146,13 @@ class DataSequence(Sequence):
         """
         batch_x = self.get_batch_images(idx, self.image_paths)
         batch_y = self.get_batch_labels(idx, self.image_paths)
+        '''
+        print("===============check batch==================")
+        print(np.squeeze(batch_y).shape)
+        #plt.imshow(np.squeeze(batch_x))
+        plt.imshow(np.squeeze(batch_y[:,:,:,0]))
+        plt.imshow(np.squeeze(batch_y[:,:,:,1]))
+        plt.show()
+        '''
         return batch_x, batch_y
+    
