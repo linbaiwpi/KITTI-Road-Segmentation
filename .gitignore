@@ -1,7 +1,12 @@
 **/*.png
-./result/*.h5
-./logs
+result/*.h5
+logs/
 **/__pycache__/
-./data_road_ext/validation/semantic
+data_road_ext/validation/semantic
 
-#!/public/assets/images/*.jpg
+models/bilstm*
+models/m_light_1.py
+
+# if an exception rule wanted
+# !/public/assets/images/*.jpg
+
