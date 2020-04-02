@@ -1,0 +1,7 @@
+**/*.png
+./result/*.h5
+./logs/*
+**/__pycache__/
+./data_road_ext/validation/semantic
+
+#!/public/assets/images/*.jpg
